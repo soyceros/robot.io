@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+
+    <video id="video" width="640" height="480" autoplay></video>
+    <button id="switch">Cambiar Cámara</button>
+    <button id="capture">Capturar Imagen</button>
+    <!-- Agregamos un canvas para guardar la imagen capturada -->
+    <canvas id="canvas" style="display: none;"></canvas>
+
+    <script>
+        let currentStream;
+        
+        function stopMediaTracks(stream){
+            stream.getTracks().forEach(track => {
+                track.stop();
+            });
+        }
+
+        function switchCamera(){
+            if (typeof currentStream !== 'undefined') {
+                stopMediaTracks(currentStream);
+            }
+
+            const video = document.getElementById('video');
+            const constraints = {
+                video: {
+                    facingMode: (video.getAttribute('facingMode') === 'user' ? 'environment' : 'user')
+                }
+            };
+
+            navigator.mediaDevices.getUserMedia(constraints)
+            .then(stream => {
+                currentStream = stream;
+                video.srcObject = stream;
+                video.setAttribute('facingMode', constraints.video.facingMode);
+            })
+            .catch(err => {
+                console.error('Error al acceder a la cámara: ', err);
+            });
+        }
+
+        function captureImage() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            // dibuja la imagen actual del video en el canvas
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            // descarga la imagen
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL('image/png');
+            link.download = 'captura.png';
+            link.click();
+        }
+
+        document.getElementById('switch').addEventListener('click', switchCamera);
+        document.getElementById('capture').addEventListener('click', captureImage);
+        window.addEventListener('load', switchCamera);
+    </script>
+</body>
+</html>
